@@ -15,7 +15,7 @@ server
   }))
   .use(express.static('../../'))
 
-  .post('/', (req, res) => {
+  .post('/api/deploy/android', (req, res) => {
     let expoStartProcess;
     const cloneBoilerplateApp = () => {
       console.log("DUPLICATING BOILERPLATE APP")
@@ -44,10 +44,30 @@ server
             console.log("ERROR READING APP JS")
             reject(err);
           } else {
-            const appWithState = data.replace(/this.state = {\n(\s|\w|:|'|,)+}/gm, "this.state = " + JSON.stringify(req.body.state));
+            const appWithState = data.replace(/this.state = {\n(\s|\w|:|'|,)+}/gm, "this.state = " + JSON.stringify(req.body.body.state));
             fs.writeFile('boilerplateApp/client/App.js', appWithState, 'utf8', function (err) {
               if (err) {
                 console.log("ERROR WRITING APP JS")
+                reject(err);
+              }
+              else {
+                resolve();
+              }
+            });
+          }
+        })
+      });
+
+      const appRestName = new Promise((resolve, reject) => {
+        fs.readFile('boilerplateApp/client/components/TabBar.js', 'utf8', function (err, data) {
+          if (err) {
+            console.log("ERROR READING TABBAR JS")
+            reject(err);
+          } else {
+            const appWithName = data.replace(/Example Restaurant/g, JSON.stringify(req.body.body.state.restaurantName));
+            fs.writeFile('boilerplateApp/client/components/TabBar.js', appWithName, 'utf8', function (err) {
+              if (err) {
+                console.log("ERROR WRITING TABBAR JS")
                 reject(err);
               }
               else {
@@ -64,7 +84,7 @@ server
             reject(err);
             console.log("ERROR READING KEYS JS")
           } else {
-            const keysWithKeys = data.replace(/APIENDPOINT/g, req.body.apiEndpoint);
+            const keysWithKeys = data.replace(/APIENDPOINT/g, req.body.body.apiEndpoint);
             fs.writeFile('boilerplateApp/client/keys.js', keysWithKeys, 'utf8', function (err) {
               if (err) {
                 console.log("ERROR WRITING KEYS JS")
@@ -76,14 +96,15 @@ server
         })
       });
 
+
       const appJsonConfig = new Promise((resolve, reject) => {
         fs.readFile('boilerplateApp/client/app.json', 'utf8', function (err, data) {
           if (err) {
             reject(err);
             console.log("ERROR READING APP JSON")
           } else {
-            let jsonWithIdentifier = data.replace(/com.company.appname/g, req.body.appIdentifier);
-            jsonWithIdentifierAndNames = data.replace(/("name"|"slug"): "(\w+)",/g, `$1: "${req.body.appName}",`);
+            let jsonWithIdentifier = data.replace(/com.company.appname/g, req.body.body.appIdentifier);
+            jsonWithIdentifierAndNames = data.replace(/("name"|"slug"): "(\w+)",/g, `$1: "${(req.body.body.appName).replace(' ','-')}",`);
             fs.writeFile('boilerplateApp/client/app.json', jsonWithIdentifierAndNames, 'utf8', function (err) {
               if (err) {
                 console.log("ERROR WRITING KEYS JS")
@@ -115,7 +136,7 @@ server
         });
       });
 
-      Promise.all([appStateWrite, appEndpointWrite, appJsonConfig, yarnInstall]).then(results => {
+      Promise.all([appStateWrite, appEndpointWrite, appJsonConfig, yarnInstall, appRestName]).then(results => {
         expoCommands();
       }).catch(e => res.sendStatus(500));
 
@@ -182,7 +203,7 @@ server
         // });
 
         // Promise.all(['buildAndroid', 'buildIos']).then(results => {
-        //     //send back two files as downloads then purgeApp
+        //     //send back two files as downloads then App
         // }) 
       }
       startExpo();
@@ -211,7 +232,6 @@ server
       }
     });
   })
-
   .post('/api/saveToDb', (req, res) =>{ 
     console.log(req.body.data)
     var mongourl = "mongodb://mango:password1@ds119765.mlab.com:19765/mangohacks"

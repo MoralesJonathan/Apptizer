@@ -17,7 +17,6 @@ class Dashboard extends Component {
   }
   updateBusinessDetails = e => {
     e.preventDefault();
-    console.log(e.currentTarget);
     let data = {};
     data.appName = document.getElementById('formBasicTitle').value;
     data.state = { restaurantName: document.getElementById('formBasicName').value};
@@ -26,15 +25,14 @@ class Dashboard extends Component {
         body: data,
       })
       .then(res => {
-        console.log(res);
         console.log(res.data);
       });
   };
 
   componentDidMount(){
     axios.get('/api/loadAppConfig').then(res => {
-      // this.setState({ res });
-      console.log(res)
+      document.getElementById('formBasicTitle').value = res.data.state.restaurantName;
+      document.getElementById('formBasicName').value = res.data.appName;
     });
   }
   render() {
@@ -82,7 +80,7 @@ class Dashboard extends Component {
           <Col md={12}>
             <Card
               id="chartHours"
-              title="Basic Business Details"
+              title="Basic App Details"
               content={
                 <Form onSubmit={this.updateBusinessDetails}>
                   <Form.Group controlId="formBasicName">

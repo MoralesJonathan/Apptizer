@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import { Navbar, Dropdown, ButtonGroup, Button} from "react-bootstrap";
-
+import { Navbar, Dropdown, ButtonGroup, Button } from "react-bootstrap";
+import axios from 'axios';
 import dashboardRoutes from "../../routes/dashboard.jsx";
 
 class Header extends Component {
@@ -10,6 +10,23 @@ class Header extends Component {
     this.state = {
       sidebarExists: false
     };
+  }
+  deployApp = () => {
+    let config = {
+      "apiEndpoint": "cjrmt6136000q01qucst4y3dy",
+      state: {}
+    };
+    config.state.restaurantName = document.getElementById('formBasicTitle').value;
+    config.appName = document.getElementById('formBasicName').value;
+    config.appIdentifier = `com.${config.state.restuarantName}.app`;
+    axios
+      .post('/api/deploy/android', {
+        body: config,
+      })
+      .then(res => {
+        console.log(res);
+        axios.get(res.data);
+      });
   }
   mobileSidebarToggle(e) {
     if (this.state.sidebarExists === false) {
@@ -34,7 +51,7 @@ class Header extends Component {
         <Navbar.Toggle />
         <Navbar.Collapse className="justify-content-end">
           <Dropdown as={ButtonGroup}>
-            <Button variant="success">Deploy apps</Button>
+            <Button variant="success" onClick={this.deployApp}>Deploy apps</Button>
 
             <Dropdown.Toggle split variant="success" id="dropdown-split-basic" />
 
